@@ -89,31 +89,19 @@ router.post('/', (req, res) => {
 // 4. if something goes wrong while trying to delete them, render the error page
 // 5. else if it's successful, redirect to the /students student list page
 router.post('/:id/delete', (req, res) => {
+    // get the ID of the student to be deleted from the URL
     const studentId = req.params.id
 
-    connection.query('SELECT * FROM students WHERE studentID = ?;', [studentId], (err, result) => {
+    // try delete the student from the database
+    connection.query('DELETE FROM students WHERE studentId = ?;', [studentId], (err, result) => {
         if (!err) {
-            // we retrieved some student from the db
-            if (result.length == 1) {
-                // there was exactly one students matching
-                connection.query('DELETE FROM students WHERE studentId = ?;', [studentId], (err, result) => {
-                    // delete the student from the database
-                    // and redirect to the student list page
-                    res.redirect('/students')
-                    return
-                })
-            }
-
-            // no students match the ID provided
-            if (result.length == 0) {
-                // return a 404
-                res.render('error', { error: `Error 404: Student with the ID ${studentId} does not exist.` })
-                return
-            }
-        } else {
-            // there was an error
-            console.log(`Student with ID=${studentId} does not exist.`)
+            console.log(result)
+            // handle success; redirect to the student list page
             res.redirect('/students')
+            return
+        } else {
+            // something went wrong
+            res.render('error', { error: err.message })
             return
         }
     })

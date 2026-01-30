@@ -1,3 +1,4 @@
+// this line of code reads the .env file, and will give you access to process.env.<environment variable name>
 require('dotenv').config()
 const router = require('express').Router()
 const mysql = require('mysql2')
@@ -28,10 +29,7 @@ router.get('/', (req, res) => {
     if (sortOrder)
         sqlCommand += ` ORDER BY firstname ` + sortOrder
 
-    console.log(sqlCommand)
-
-
-    connection.query(sqlCommand, [`%${firstnameSearch}%`], (error, result, fields) => {
+    connection.query(sqlCommand, [`%${firstnameSearch}%`], (error, result) => {
         if (!error) {
             // everything was successful:
             res.render('students', { studentList: result })
@@ -44,11 +42,88 @@ router.get('/', (req, res) => {
     })
 })
 
+// GET /students/new
+router.get('/new', (req, res) => {
+    res.render('addStudent', {})
+})
+
+// POST /students
+// Add a new student to the database
+router.post('/', (req, res) => {
+    // Get the 'firstname' and 'lastname' from the request body
+    const firstname = req.body.firstname
+    const lastname = req.body.lastname
+
+    // validate the data from the request body
+    // in the DB, we set "firstname" and "lastname" columns to NOT NULL
+    if (!firstname || !lastname) {
+        // the firstname or lastname is missing from the request body
+        res.render('error', { error: "There needs to be a valid firstname and lastname." })
+        return
+    }
+
+    // INSERT INTO students (firstname, lastname) VALUES ('John', 'Smith');
+    const sqlCommand = `INSERT INTO students (firstname, lastname) VALUES (?, ?);`
+
+    // execute the sql on the mysql connection
+    connection.query(sqlCommand, [firstname, lastname], (err, result) => {
+        if (!err) {
+            console.log(result)
+            // success - redirect to the student list page
+            res.redirect('/students')
+            return
+        } else {
+            // error
+            res.render('error', { error: err })
+            return
+        }
+    })
+})
+
+// POST /students/id/delete
+// LOGIC:
+// 1. check if a student with the provided ID exists
+// 2. if the student does not exist, render the error page
+// 3. if the student does exist, try delete them from the database
+// setup a SQL command to delete the student
+// 4. if something goes wrong while trying to delete them, render the error page
+// 5. else if it's successful, redirect to the /students student list page
+router.post('/:id/delete', (req, res) => {
+    const studentId = req.params.id
+
+    connection.query('SELECT * FROM students WHERE studentID = ?;', [studentId], (err, result) => {
+        if (!err) {
+            // we retrieved some student from the db
+            if (result.length == 1) {
+                // there was exactly one students matching
+                connection.query('DELETE FROM students WHERE studentId = ?;', [studentId], (err, result) => {
+                    // delete the student from the database
+                    // and redirect to the student list page
+                    res.redirect('/students')
+                    return
+                })
+            }
+
+            // no students match the ID provided
+            if (result.length == 0) {
+                // return a 404
+                res.render('error', { error: `Error 404: Student with the ID ${studentId} does not exist.` })
+                return
+            }
+        } else {
+            // there was an error
+            console.log(`Student with ID=${studentId} does not exist.`)
+            res.redirect('/students')
+            return
+        }
+    })
+})
+
 // Return 'asc', 'desc' or null
 function normalizeSortOrderString(input) {
     if (!input)
         return null
-    
+
     input = input.toLowerCase()
     // if input is not a valid 'asc' / 'desc' return null 
     if (input !== 'asc' && input !== 'desc') // could be undefined or "adfgsrthhyr"
@@ -56,6 +131,5 @@ function normalizeSortOrderString(input) {
 
     return input
 }
-
 
 module.exports = router

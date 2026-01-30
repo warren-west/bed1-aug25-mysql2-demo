@@ -10,6 +10,10 @@ const studentsRouter = require('./routes/students')
 app.set("views", path.join(__dirname, 'views'))
 app.set("view engine", "ejs")
 
+// allow reading JSON data from requests
+app.use(express.json()) // allow the body of an incoming request to be read
+app.use(express.urlencoded({ extended: false })) // allow forms to write JSON to the body
+
 // wire up the route to the main server object
 app.use('/students', studentsRouter)
 

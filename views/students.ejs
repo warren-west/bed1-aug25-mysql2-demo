@@ -6,6 +6,7 @@
     <title>Student List</title>
 </head>
 <body>
+    <%- include('./partials/navbar.ejs') %>
     <h1>Student List</h1>
 
     <form action="/students" method="get">
@@ -24,7 +25,12 @@
 
     <ul>
         <% studentList.forEach(s => { %>
-         <li><%= s.firstname %> <%= s.lastname %> <small>(ID: <%= s.studentId %>)</small></li>
+         <li><%= s.firstname %> <%= s.lastname %> 
+            <small>(ID: <%= s.studentId %>)</small>
+            <form method="post" action="/students/<%= s.studentId %>/delete" style="display: inline;">
+                <button type="submit">❌</button>
+            </form>
+        </li>
         <% }) %>
     </ul>
     <% if (studentList.length == 0) { %>

@@ -21,7 +21,7 @@ npm install
 ```
 
 ## Environment Variables
-This project uses 4 environment variables:
+This project uses 5 environment variables:
 1. `PORT`: Which port the server should listen on.
 2. `DATABASE`: The name of the database for MySql to connect to.
 3. `HOST`: Where the database is located (for now we're only working with localhost).

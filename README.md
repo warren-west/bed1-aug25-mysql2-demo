@@ -51,7 +51,7 @@ PASSWORD='admin'
 I've added a `/scripts` folder that contains the necessary SQL code to create the `universitydb` database, as well as the `students` table, and the data to populate the `students` table with. Copy and paste the SQL code into MySql Workbench and run it to have a fresh `universitydb` database to work with.
 
 ## Code Snippets
-### Using `dotenv` and a `.env` file
+### 1. Using `dotenv` and a `.env` file
 The installation instructions above require you to have a `.env` file in the root of your project with the following key-value pairs:
 ```
 PORT='3000'
@@ -69,7 +69,7 @@ require('dotenv').config()
 process.env.PORT
 ```
 
-### Setting up the Database Connection
+### 2. Setting up the Database Connection
 We use the `mysql2` package to connect to our MySql Database, and interact with it via SQL commands.
 Use `npm i mysql2` to install the [mysql2](https://www.npmjs.com/package/mysql2) package from NPM, and import it with Node's `require()` function to create a `mysql` object:
 ```javascript
@@ -88,7 +88,7 @@ const connection = mysql.createConnection({
 ```
 > If for some reason we wanted to connect to multiple databases in MySql, we would create multiple connections with the `mysql` object.
 
-
+### 3. Read data from DB
 We can use this `connection` object within the route endpoints of `/routes/students.js` to perform CRUD functionality on our database. To get all students from the database, we would use the SQL command:
 ```sql
 SELECT * FROM students;
@@ -115,6 +115,7 @@ connection.query('SELECT * FROM students;', (error, result) => {
 })
 ```
 
+### 4. Advanced read from DB
 The current SELECT statement is very boring though. How about we try and customize the SQL SELECT statement to possibly filter the student list, or to order it? Think to how we would achieve that by SQL:
 ```sql
 -- Using a partial match filter:
@@ -159,4 +160,95 @@ router.get('/', (req, res) => {
         // handle the results of the SQL command
     })
 })
+```
+
+### 5. Add new student to DB
+We can use the exact same logic as in the previous section to add a new student into our database, by constructing an appropriate SQL command, and executing it on the database through the `connection.query()` function. You can imagine the SQL command would look like this:
+```sql
+INSERT INTO students (firstname, lastname) VALUES ('Jon', 'Snow');
+```
+And you can probably imagine that the query text in our JavaScript would have to use a prepared statement, adding variable data into the command like this:
+```javascript
+const sqlCommand = "INSERT INTO students (firstname, lastname) VALUES (?, ?);"
+```
+> Each `?` represents a variable that should be replaced with a SQL parameter.
+
+Let's create a new `POST` endpoint, that handles adding a new students into the database. It should have a place for us to execute the above command on our `connection` object. It'll look like this:
+```javascript
+// POST /
+router.post('/', (req, res) => {
+    // we can get the values for "firstname" and "lastname" from the body of the request
+    // we have done this before:
+    const firstname = req.body.firstname
+    const lastname = req.body.lastname
+
+    // perform some validation to make sure neither are empty
+    if (!firstname || !lastname) {
+        // handle the error...
+    }
+
+    // setup the command and execute the query
+    const sqlCommand = "INSERT INTO students (firstname, lastname) VALUES (?, ?);"
+    connection.query(sqlCommand, [ firstname, lastname ], (error, result) => {
+        if (!error) {
+            // If the error is not null, handle the success
+            console.log("Success")
+            console.log(result)
+        } else {
+            // else handle the error
+            console.log("Error")
+            console.log(error)
+        }
+    })
+})
+```
+
+### 6. Deleting records from the DB
+We can delete a record from a table in the database with the following SQL code:
+```sql
+DELETE FROM students WHERE studentId = 1;
+```
+It's always a good idea to delete one record at a time, using the primary key field. There are instances where we can do batch-deletes, but remember what Uncle Ben always said: *"With great power comes great responsibility."*
+
+We can create a new endpoint in our `/routes/students.js` to handle deletions. For now, because we haven't officially learnt how to use a tool like `Axios` to send HTTP requests other than `GET` and `POST`, we are limited to creating endpoints that only receive `GET`s and `POST`s. So I've created a `POST` handler that will intercept `POST` requests to the URL `/students/:id/delete`. In the future we'll have a proper `DELETE` handler (`router.delete('/', (req, res) => {...})`). It's usually considered bad practice to have words like *add*, *delete*, *update*, *fetch*, etc. in our URLS.
+```javascript
+// POST /:id/delete
+router.post('/:id/delete', (req, res) => {
+    // get the ID of the student to delete from the URL
+    const studentId = req.params.id
+
+    // perform the deletion
+    connection.query("DELETE FROM students WHERE studentId = ?;", [studentId], (error, result) => {
+        if (!error) {
+            // handle the success
+        } else {
+            // handle the error
+        }
+    })
+})
+```
+
+We can check how many rows were affected by the command, by logging out the `result` object. It has a property on it called `affectedRows`, with the number of affected rows. So we can determine that the execution was successful if 1 row was affected. The result object looks like this:
+```javascript
+ResultSetHeader {
+  fieldCount: 0,
+  affectedRows: 1,
+  insertId: 0,
+  info: '',
+  serverStatus: 2,
+  warningStatus: 0,
+  changedRows: 0
+}
+```
+If `0` rows were affected no records were deleted. Perhaps because an invalid ID was provided. The result object looks like this:
+```javascript
+ResultSetHeader {
+  fieldCount: 0,
+  affectedRows: 0,
+  insertId: 0,
+  info: '',
+  serverStatus: 2,
+  warningStatus: 0,
+  changedRows: 0
+}
 ```

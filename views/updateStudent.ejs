@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Student</title>
+</head>
+
+<body>
+    <%- include('./partials/navbar.ejs') %>
+        <h1>Update Student</h1>
+
+        <!-- Form to add update an existing student in the database -->
+        <!-- Remember, if the form has method="post", the form data will be sent to the URL attached to the HTTP body -->
+        <!-- Remember, if the form has method="get", the form data will be attached to the URL as a query string -->
+        <form action="/students/<%= studentId %>/update" method="post">
+            <!-- input for the firstname -->
+            <small>ID: <%= studentId %></small><br>
+            <label for="input-firstname">First Name: </label>
+            <input id="input-firstname" name="firstname" type="text" placeholder="John">
+            <br>
+            <!-- input for the lastname -->
+            <label for="input-lastname">Last Name: </label>
+            <input id="input-lastname" name="lastname" type="text" placeholder="Smith">
+            <br>
+            <!-- submit button -->
+            <button type="submit">Update Student</button>
+        </form>
+
+</body>
+
+</html>

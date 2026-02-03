@@ -27,6 +27,9 @@
         <% studentList.forEach(s => { %>
          <li><%= s.firstname %> <%= s.lastname %> 
             <small>(ID: <%= s.studentId %>)</small>
+            <form method="get" action="/students/<%= s.studentId %>/update" style="display: inline;">
+                <button type="submit">✏️</button>
+            </form>
             <form method="post" action="/students/<%= s.studentId %>/delete" style="display: inline;">
                 <button type="submit">❌</button>
             </form>

@@ -43,8 +43,16 @@ router.get('/', (req, res) => {
 })
 
 // GET /students/new
+// Renders the page with the New Student form
 router.get('/new', (req, res) => {
     res.render('addStudent', {})
+})
+
+// GET /students/:id/update
+router.get('/:id/update', (req, res) => {
+    const studentId = req.params.id
+
+    res.render('updateStudent', {studentId})
 })
 
 // POST /students
@@ -98,12 +106,40 @@ router.post('/:id/delete', (req, res) => {
             console.log(result)
             // handle success; redirect to the student list page
             res.redirect('/students')
+            res.end()
             return
         } else {
             // something went wrong
             res.render('error', { error: err.message })
+            res.end()
             return
         }
+    })
+})
+
+// UPDATE Student by ID
+router.post('/:id/update', (req, res) => {
+    console.log('PING')
+    const studentId = req.params.id
+    // Get the 'firstname' and 'lastname' from the request body with destructuring syntax
+    const { firstname, lastname } = req.body
+
+    console.log(studentId, firstname, lastname)
+
+    const sqlCommand = 'UPDATE students SET firstname = ?, lastname = ? WHERE studentId = ?;'
+
+    connection.query(sqlCommand, [firstname, lastname, studentId], (err, result) => {
+        if (!err) {
+            console.log('Success')
+            console.log(result)
+        } else {
+            console.log('Error happened')
+            console.log(err.message)
+        }
+
+        // It's not a good idea trying to .render() a page from anything but a .get() endpoint
+        res.redirect('/students')
+        return
     })
 })
 
